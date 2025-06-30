@@ -89,33 +89,44 @@ static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(mpsl_timeslot
 			timeslot_extension_failed = false;
 
 			// Reset the radio to make sure no configuration remains from BLE
-			NVIC_ClearPendingIRQ(HAL_RADIO_IRQn);
-			NRF_RADIO->POWER = RADIO_POWER_POWER_Disabled << RADIO_POWER_POWER_Pos;
-			NRF_RADIO->POWER = RADIO_POWER_POWER_Enabled << RADIO_POWER_POWER_Pos;
-			NVIC_ClearPendingIRQ(HAL_RADIO_IRQn);
+			// on the 52, power was the register for this.
+			//NRF_RADIO->POWER = RADIO_POWER_POWER_Disabled << RADIO_POWER_POWER_Pos;
+			//NRF_RADIO->POWER = RADIO_POWER_POWER_Enabled << RADIO_POWER_POWER_Pos;
+			/*The RADIO POWER register on nRF52 is used to "reset the radio". manpage:
+			"The peripheral and its registers will be reset to its initial state by switching the peripheral off and then back on again."
+			On the nRF54L15, there is no POWER register, and it's now replaced by the new TASKS_SOFTRESET register, 
+			from the register description. 
+			"Reset all public registers, but with these exceptions: 
+			DMA registers and EVENT/INTEN/SUBSCRIBE/PUBLISH registers. Only to be used in DISABLED state."
+			*/
+		 	// radio_1_irqn exists in the mdk but isnt used anywhere. its not in the register list. but 139 is defined in a lot of places.
+		 	// radio_0_irq is not mapped to VPR, but radio_1 is.
+			NVIC_ClearPendingIRQ(RADIO_0_IRQn);
+			NRF_RADIO->TASKS_SOFTRESET = RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Trigger << RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Pos;
+			NVIC_ClearPendingIRQ(RADIO_0_IRQn);
 
-			nrf_timer_bit_width_set(NRF_TIMER0, NRF_TIMER_BIT_WIDTH_32);
+			nrf_timer_bit_width_set(NRF_TIMER00, NRF_TIMER_BIT_WIDTH_32);
 			
-			nrf_timer_cc_set(NRF_TIMER0, NRF_TIMER_CC_CHANNEL0, TIMER_EXPIRY_US_EARLY);
-			nrf_timer_int_enable(NRF_TIMER0, NRF_TIMER_INT_COMPARE0_MASK);
+			nrf_timer_cc_set(NRF_TIMER00, NRF_TIMER_CC_CHANNEL0, TIMER_EXPIRY_US_EARLY);
+			nrf_timer_int_enable(NRF_TIMER00, NRF_TIMER_INT_COMPARE0_MASK);
 
-			nrf_timer_cc_set(NRF_TIMER0, NRF_TIMER_CC_CHANNEL1, TIMER_EXPIRY_REQ);
-			nrf_timer_int_enable(NRF_TIMER0, NRF_TIMER_INT_COMPARE1_MASK);
+			nrf_timer_cc_set(NRF_TIMER00, NRF_TIMER_CC_CHANNEL1, TIMER_EXPIRY_REQ);
+			nrf_timer_int_enable(NRF_TIMER00, NRF_TIMER_INT_COMPARE1_MASK);
 
 			set_timeslot_active_status(true);
 			break;
 
 		case MPSL_TIMESLOT_SIGNAL_TIMER0:
-			if(nrf_timer_event_check(NRF_TIMER0, NRF_TIMER_EVENT_COMPARE0)) {
-				nrf_timer_int_disable(NRF_TIMER0, NRF_TIMER_INT_COMPARE0_MASK);
-				nrf_timer_event_clear(NRF_TIMER0, NRF_TIMER_EVENT_COMPARE0);
+			if(nrf_timer_event_check(NRF_TIMER00, NRF_TIMER_EVENT_COMPARE0)) {
+				nrf_timer_int_disable(NRF_TIMER00, NRF_TIMER_INT_COMPARE0_MASK);
+				nrf_timer_event_clear(NRF_TIMER00, NRF_TIMER_EVENT_COMPARE0);
 
 				signal_callback_return_param.callback_action = MPSL_TIMESLOT_SIGNAL_ACTION_EXTEND;
 				signal_callback_return_param.params.extend.length_us = TIMESLOT_LENGTH_US;	
 			}
-			else if(nrf_timer_event_check(NRF_TIMER0, NRF_TIMER_EVENT_COMPARE1)) {
-				nrf_timer_int_disable(NRF_TIMER0, NRF_TIMER_INT_COMPARE1_MASK);
-				nrf_timer_event_clear(NRF_TIMER0, NRF_TIMER_EVENT_COMPARE1);
+			else if(nrf_timer_event_check(NRF_TIMER00, NRF_TIMER_EVENT_COMPARE1)) {
+				nrf_timer_int_disable(NRF_TIMER00, NRF_TIMER_INT_COMPARE1_MASK);
+				nrf_timer_event_clear(NRF_TIMER00, NRF_TIMER_EVENT_COMPARE1);
 
 				if(timeslot_extension_failed) {
 					signal_callback_return_param.callback_action = MPSL_TIMESLOT_SIGNAL_ACTION_REQUEST;
@@ -132,15 +143,15 @@ static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(mpsl_timeslot
 			signal_callback_return_param.callback_action = MPSL_TIMESLOT_SIGNAL_ACTION_NONE;
 
 			// Set next trigger time to be the current + Timer expiry early
-			uint32_t current_cc = nrf_timer_cc_get(NRF_TIMER0, NRF_TIMER_CC_CHANNEL0);
-			nrf_timer_bit_width_set(NRF_TIMER0, NRF_TIMER_BIT_WIDTH_32);
-			nrf_timer_cc_set(NRF_TIMER0, NRF_TIMER_CC_CHANNEL0, current_cc + TIMESLOT_LENGTH_US);
-			nrf_timer_int_enable(NRF_TIMER0, NRF_TIMER_INT_COMPARE0_MASK);
+			uint32_t current_cc = nrf_timer_cc_get(NRF_TIMER00, NRF_TIMER_CC_CHANNEL0);
+			nrf_timer_bit_width_set(NRF_TIMER00, NRF_TIMER_BIT_WIDTH_32);
+			nrf_timer_cc_set(NRF_TIMER00, NRF_TIMER_CC_CHANNEL0, current_cc + TIMESLOT_LENGTH_US);
+			nrf_timer_int_enable(NRF_TIMER00, NRF_TIMER_INT_COMPARE0_MASK);
 
-			current_cc = nrf_timer_cc_get(NRF_TIMER0, NRF_TIMER_CC_CHANNEL1);
-			nrf_timer_bit_width_set(NRF_TIMER0, NRF_TIMER_BIT_WIDTH_32);
-			nrf_timer_cc_set(NRF_TIMER0, NRF_TIMER_CC_CHANNEL1, current_cc + TIMESLOT_LENGTH_US);
-			nrf_timer_int_enable(NRF_TIMER0, NRF_TIMER_INT_COMPARE1_MASK);
+			current_cc = nrf_timer_cc_get(NRF_TIMER00, NRF_TIMER_CC_CHANNEL1);
+			nrf_timer_bit_width_set(NRF_TIMER00, NRF_TIMER_BIT_WIDTH_32);
+			nrf_timer_cc_set(NRF_TIMER00, NRF_TIMER_CC_CHANNEL1, current_cc + TIMESLOT_LENGTH_US);
+			nrf_timer_int_enable(NRF_TIMER00, NRF_TIMER_INT_COMPARE1_MASK);
 
 			p_ret_val = &signal_callback_return_param;
 			break;
@@ -161,8 +172,8 @@ static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(mpsl_timeslot
 			// We have to manually call the RADIO IRQ handler when the RADIO signal occurs
 			if(m_in_timeslot) RADIO_IRQHandler();
 			else {
-				NVIC_ClearPendingIRQ(RADIO_IRQn);
-				NVIC_DisableIRQ(RADIO_IRQn);
+				NVIC_ClearPendingIRQ(RADIO_0_IRQn);
+				NVIC_DisableIRQ(RADIO_0_IRQn);
 			}
 			break;
 

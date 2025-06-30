@@ -150,7 +150,7 @@ static int esb_initialize(app_esb_mode_t mode)
 		return err;
 	}
 
-	NVIC_SetPriority(RADIO_IRQn, 0);
+	NVIC_SetPriority(RADIO_0_IRQn, 0);
 
 	if (mode == APP_ESB_MODE_PRX) {
 		esb_start_rx();
@@ -223,8 +223,8 @@ static int app_esb_suspend(void)
 	if(m_mode == APP_ESB_MODE_PTX) {
 		uint32_t irq_key = irq_lock();
 
-		irq_disable(RADIO_IRQn);
-		NVIC_DisableIRQ(RADIO_IRQn);
+		irq_disable(RADIO_0_IRQn);
+		NVIC_DisableIRQ(RADIO_0_IRQn);
 
 		NRF_RADIO->SHORTS = 0;
 
@@ -232,12 +232,12 @@ static int app_esb_suspend(void)
 		NRF_RADIO->TASKS_DISABLE = 1;
 		while(NRF_RADIO->EVENTS_DISABLED == 0);
 
-		NRF_TIMER2->TASKS_STOP = 1;
-		NRF_RADIO->INTENCLR = 0xFFFFFFFF;
+		NRF_TIMER20->TASKS_STOP = 1;
+		NRF_RADIO->INTENCLR00 = 0xFFFFFFFF;
 		
 		esb_disable();
 
-		NVIC_ClearPendingIRQ(RADIO_IRQn);
+		NVIC_ClearPendingIRQ(RADIO_0_IRQn);
 
 		irq_unlock(irq_key);
 	}

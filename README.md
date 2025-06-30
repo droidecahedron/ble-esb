@@ -24,16 +24,14 @@ The Bluetooth setup is handled by the app_bt_lbs.c module. Currently the only in
 Requirements
 ************
 
-- nRF Connect SDK v2.6.0
+- nRF Connect SDK v3.0.1
 - One of the following development kits:
     - nRF52DK
-    - nRF52833DK
-    - nRF52840DK
-    - nRF5340DK
+    - nRF54L15DK
 
 TODO
 ****
-
+- PORT... 
 - Implement TX failed handling (now packets will be retained forever in the app_esb buffers, until an ACK is received)
 - Reliability testing, on the nRF5340 in particular
 - More functionality in app_esb, primarily to allow changing ESB configuration and enabled/disabled status at runtime
