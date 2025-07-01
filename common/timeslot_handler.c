@@ -25,7 +25,7 @@ static timeslot_callback_t m_callback;
 static volatile bool m_in_timeslot = false;
 
 // Declare the RADIO IRQ handler to supress warning
-void RADIO_IRQHandler(void);
+void radio_dynamic_irq_handler(void); // 336857
 
 // Requests and callbacks to be run serialized from an SWI interrupt
 enum mpsl_timeslot_call {
@@ -170,7 +170,7 @@ static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(mpsl_timeslot
 			p_ret_val = &signal_callback_return_param;
 
 			// We have to manually call the RADIO IRQ handler when the RADIO signal occurs
-			if(m_in_timeslot) RADIO_IRQHandler();
+			if(m_in_timeslot) radio_dynamic_irq_handler();
 			else {
 				NVIC_ClearPendingIRQ(RADIO_0_IRQn);
 				NVIC_DisableIRQ(RADIO_0_IRQn);

@@ -44,9 +44,9 @@ static void adv_work_handler(struct k_work *work)
 {
     int err = bt_le_adv_start(BT_LE_ADV_CONN_FAST_2, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
     if (err) {
-        LOG_ERR("Advertising failed to start (err %d)", err);
+        printk("Advertising failed to start (err %d)", err);
     } else {
-        LOG_INF("Advertising successfully started");
+        printk("Advertising successfully started");
     }
 }
 
@@ -57,7 +57,7 @@ static void advertising_start(void)
 
 static void recycled_cb(void)
 {
-    LOG_INF("Connection object recycled. Restarting advertising.");
+    printk("Connection object recycled. Restarting advertising.");
     if (my_conn) {
         bt_conn_unref(my_conn);
         my_conn = NULL;
