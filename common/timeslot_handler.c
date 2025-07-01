@@ -25,7 +25,7 @@ static timeslot_callback_t m_callback;
 static volatile bool m_in_timeslot = false;
 
 // Declare the RADIO IRQ handler to supress warning
-void radio_dynamic_irq_handler(void); // 336857
+void radio_dynamic_irq_handler(void); // 336857, de-static L1736 in esb.c 
 
 // Requests and callbacks to be run serialized from an SWI interrupt
 enum mpsl_timeslot_call {
