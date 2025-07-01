@@ -76,6 +76,7 @@ static void set_timeslot_active_status(bool active)
 
 static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(mpsl_timeslot_session_id_t session_id, uint32_t signal_type)
 {
+	static uint8_t idle_supp = 0;
 	(void) session_id; // unused parameter
 	static bool timeslot_extension_failed;
 	NRF_P0->OUTSET = BIT(28);
@@ -212,7 +213,11 @@ static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(mpsl_timeslot
 			break;
 
 		case MPSL_TIMESLOT_SIGNAL_SESSION_IDLE:
-			LOG_INF("idle");
+			if(idle_supp++>20)
+			{
+			 LOG_INF("idle");
+			 idle_supp = 0;
+			}
 
 			// Request a new timeslot in this case
 			schedule_request(REQ_MAKE_REQUEST);
