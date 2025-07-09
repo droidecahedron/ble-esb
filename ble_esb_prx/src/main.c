@@ -36,10 +36,10 @@ static void dbg_pin_cfg(uint32_t pin, uint32_t event_addr)
 	nrf_gpio_cfg_output(RADIO_READY_DEBUG_PIN);
 	nrf_gpio_pin_clear(RADIO_READY_DEBUG_PIN);
 	for(int i=0;i<2;i++) {
-	nrf_gpio_pin_set(RADIO_READY_DEBUG_PIN);
-	k_msleep(500);
-	nrf_gpio_pin_clear(RADIO_READY_DEBUG_PIN);
-	k_msleep(500);
+		nrf_gpio_pin_set(RADIO_READY_DEBUG_PIN);
+		k_msleep(500);
+		nrf_gpio_pin_clear(RADIO_READY_DEBUG_PIN);
+		k_msleep(500);
 	}
 
     nrfx_gpiote_t gpiote_instance = NRFX_GPIOTE_INSTANCE(20);

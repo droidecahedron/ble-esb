@@ -181,9 +181,6 @@ int app_esb_init(app_esb_mode_t mode, app_esb_callback_t callback)
 
 	m_callback = callback;
 	m_mode = mode;
-	
-	NRF_P0->DIRSET = BIT(28) | BIT(29) | BIT(30) | BIT(31) | BIT(4);
-	NRF_P0->OUTCLR = BIT(28) | BIT(29) | BIT(30) | BIT(31);
 
 	ret = clocks_start();
 	if (ret < 0) {
@@ -219,7 +216,6 @@ int app_esb_send(app_esb_data_t *tx_packet)
 static int app_esb_suspend(void)
 {
 	m_active = false;
-	NRF_P0->OUTSET = BIT(29);
 	if(m_mode == APP_ESB_MODE_PTX) {
 		uint32_t irq_key = irq_lock();
 
@@ -244,7 +240,6 @@ static int app_esb_suspend(void)
 	else {
 		esb_stop_rx();
 	}
-	NRF_P0->OUTCLR = BIT(29);
 
 	// Todo: Figure out how to use the esb_suspend() function rather than having to disable at the end of every timeslot
 	//esb_suspend();
@@ -253,18 +248,15 @@ static int app_esb_suspend(void)
 
 static int app_esb_resume(void)
 {
-	NRF_P0->OUTSET = BIT(29);
 	if(m_mode == APP_ESB_MODE_PTX) {
 		int err = esb_initialize(m_mode);
 		m_active = true;
-		NRF_P0->OUTCLR = BIT(29);
 		pull_packet_from_tx_msgq();
 		return err;
 	}
 	else {
 		int err = esb_initialize(m_mode);
 		m_active = true;
-		NRF_P0->OUTCLR = BIT(29);
 		return err;
 	}
 }
@@ -274,11 +266,9 @@ static void on_timeslot_start_stop(timeslot_callback_type_t type)
 {
 	switch (type) {
 		case APP_TS_STARTED:
-			NRF_P0->OUTSET = BIT(31);
 			app_esb_resume();
 			break;
 		case APP_TS_STOPPED:
-			NRF_P0->OUTCLR = BIT(31);
 			app_esb_suspend();
 			break;
 	}

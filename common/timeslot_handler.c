@@ -79,7 +79,6 @@ static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(mpsl_timeslot
 	static uint8_t idle_supp = 0;
 	(void) session_id; // unused parameter
 	static bool timeslot_extension_failed;
-	NRF_P0->OUTSET = BIT(28);
 	mpsl_timeslot_signal_return_param_t *p_ret_val = NULL;
 	switch (signal_type) {
 		case MPSL_TIMESLOT_SIGNAL_START:
@@ -103,7 +102,7 @@ static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(mpsl_timeslot
 		 	// radio_1_irqn exists in the mdk but isnt used anywhere. its not in the register list. but 139 is defined in a lot of places.
 		 	// radio_0_irq is not mapped to VPR, but radio_1 is.
 			NVIC_ClearPendingIRQ(RADIO_0_IRQn);
-			NRF_RADIO->TASKS_SOFTRESET = RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Trigger << RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Pos;
+			// NRF_RADIO->TASKS_SOFTRESET = RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Trigger << RADIO_TASKS_SOFTRESET_TASKS_SOFTRESET_Pos;
 			NVIC_ClearPendingIRQ(RADIO_0_IRQn);
 
 			nrf_timer_bit_width_set(NRF_TIMER00, NRF_TIMER_BIT_WIDTH_32);
@@ -240,7 +239,7 @@ static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(mpsl_timeslot
 			k_oops();
 			break;
 	}
-	NRF_P0->OUTCLR = BIT(28);
+
 	return p_ret_val;
 }
 
@@ -257,7 +256,6 @@ static void mpsl_nonpreemptible_thread(void)
 
 	while (1) {
 		if (k_msgq_get(&mpsl_api_msgq, &api_call, K_FOREVER) == 0) {
-			//NRF_P0->OUTSET = BIT(29);
 			switch (api_call) {
 				case REQ_OPEN_SESSION:
 					LOG_DBG("req open");
@@ -288,7 +286,6 @@ static void mpsl_nonpreemptible_thread(void)
 					k_oops();
 					break;
 			}
-			//NRF_P0->OUTCLR = BIT(29);
 		}
 	}
 }
